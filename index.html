@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xweeb: Визуальный роман</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 700px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+        
+        #scene-background {
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1s ease;
+            filter: brightness(0.8);
+        }
+        
+        #characters-container {
+            position: absolute;
+            bottom: 150px;
+            width: 100%;
+            height: 400px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+        }
+        
+        .character {
+            width: 300px;
+            height: 400px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .character.active {
+            opacity: 1;
+        }
+        
+        #dialogue-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 150px;
+            background-color: rgba(0, 0, 0, 0.85);
+            border-top: 3px solid #6c5ce7;
+            padding: 20px;
+        }
+        
+        #speaker-name {
+            color: #6c5ce7;
+            font-size: 22px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        #dialogue-text {
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            height: 60px;
+            overflow-y: auto;
+        }
+        
+        #choices-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .choice-btn {
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .choice-btn:hover {
+            background-color: #5b4fd8;
+            transform: translateY(-2px);
+        }
+        
+        #next-btn {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            background-color: #00cec9;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        #next-btn:hover {
+            background-color: #00b5b2;
+        }
+        
+        #game-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: #6c5ce7;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            letter-spacing: 2px;
+        }
+        
+        #save-load-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .save-load-btn {
+            background-color: rgba(108, 92, 231, 0.7);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .save-load-btn:hover {
+            background-color: rgba(108, 92, 231, 0.9);
+        }
+        
+        #scene-indicator {
+            position: absolute;
+            bottom: 160px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        /* Полоса прокрутки */
+        #dialogue-text::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #dialogue-text::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        #dialogue-text::-webkit-scrollbar-thumb {
+            background: #6c5ce7;
+            border-radius: 10px;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            #game-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            #characters-container {
+                height: 300px;
+                bottom: 180px;
+            }
+            
+            .character {
+                width: 200px;
+                height: 300px;
+            }
+            
+            #dialogue-container {
+                height: 180px;
+                padding: 15px;
+            }
+            
+            #dialogue-text {
+                height: 70px;
+                font-size: 16px;
+            }
+            
+            #choices-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-title">XWEEB: Визуальный роман</div>
+        
+        <div id="scene-background"></div>
+        
+        <div id="characters-container">
+            <div class="character" id="character-xweeb"></div>
+            <div class="character" id="character-luna"></div>
+            <div class="character" id="character-kai"></div>
+        </div>
+        
+        <div id="scene-indicator">Сцена 1: Начало</div>
+        
+        <div id="dialogue-container">
+            <div id="speaker-name">Xweeb</div>
+            <div id="dialogue-text">Привет! Я Xweeb, и это моя история. Сегодня всё началось как обычно, но что-то пошло не так... Как будто мир вокруг меня изменился. Интересно, что меня ждёт впереди?</div>
+            <div id="choices-container">
+                <!-- Кнопки выбора будут добавляться динамически -->
+            </div>
+            <button id="next-btn">Далее</button>
+        </div>
+        
+        <div id="save-load-container">
+            <button class="save-load-btn" id="save-btn">Сохранить</button>
+            <button class="save-load-btn" id="load-btn">Загрузить</button>
+        </div>
+    </div>
+
+    <script>
+        // Данные игры
+        const gameData = {
+            currentSceneId: 0,
+            playerName: "Xweeb",
+            scenes: [
+                {
+                    id: 0,
+                    background: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+                    characters: [
+                        { id: "xweeb", position: "left", active: true }
+                    ],
+                    speaker: "Xweeb",
+                    text: "Привет! Я Xweeb, и это моя история. Сегодня всё началось как обычно, но что-то пошло не так... Как будто мир вокруг меня изменился. Интересно, что меня ждёт впереди?",
+                    choices: [
+                        { text: "Осмотреться вокруг", nextScene: 1 },
+                        { text: "Проверить телефон", nextScene: 2 }
+                    ],
+                    sceneName: "Начало"
+                },
+                {
+                    id: 1,
+                    background: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+                    characters: [
+                        { id: "xweeb", position: "left", active: true },
+                        { id: "luna", position: "right", active: true }
+                    ],
+                    speaker: "Xweeb",
+                    text: "Я огляделся и заметил, что на скамейке в парке сидит девушка, которую я никогда раньше не видел. У неё фиолетовые волосы и странное свечение вокруг. Кто это может быть?",
+                    choices: [
+                        { text: "Подойти и поздороваться", nextScene: 3 },
+                        { text: "Продолжить наблюдать издалека", nextScene: 4 }
+                    ],
+                    sceneName: "Таинственная встреча"
+                },
+                {
+                    id: 2,
+                    background: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+                    characters: [
+                        { id: "xweeb", position: "center", active: true }
+                    ],
+                    speaker: "Xweeb",
+                    text: "Я достал телефон и увидел странное сообщение от неизвестного номера: 'Ты не тот, кем кажешься. Ищи ответы в зеркалах'. Что это значит? И кто мог отправить это сообщение?",
+                    choices: [
+                        { text: "Попробовать перезвонить", nextScene: 5 },
+                        { text: "Удалить сообщение и забыть", nextScene: 6 }
+                    ],
+                    sceneName: "Странное сообщение"
+                },
+                {
+                    id: 3,
+                    background: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+                    characters: [
+                        { id: "xweeb", position: "left", active: true },
+                        { id: "luna", position: "right", active: true }
+                    ],
+                    speaker: "Luna",
+                    text: "Привет, Xweeb. Я знала, что ты подойдёшь. Меня зовут Луна, и я наблюдаю за тобой уже некоторое время. Ты особенный, и у меня есть для тебя важная информация.",
+                    choices: [
+                        { text: "Что ты имеешь в виду? Кто ты?", nextScene: 7 },
+                        { text: "Извини, я, кажется, ошибся", nextScene: 8 }
+                    ],
+                    sceneName: "Знакомство с Луной"
+                },
+                {
+                    id: 4,
+                    background: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+                    characters: [
+                        { id: "xweeb", position: "left", active: true },
+                        { id: "luna", position: "right", active: false }
+                    ],
+                    speaker: "Xweeb",
+                    text: "Я решил не подходить и продолжил наблюдать. Внезапно девушка обернулась и посмотрела прямо на меня. Её глаза светились неземным светом. Кажется, она знает, что я здесь.",
+                    choices: [
+                        { text: "Попытаться скрыться", nextScene: 9 },
+                        { text: "Всё же подойти", nextScene: 3 }
+                    ],
+                    sceneName: "Обнаружен"
+                },
+                {
+                    id: 5,
+                    background: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+                    characters: [
+                        { id: "xweeb", position: "center", active: true },
+                        { id: "kai", position: "right", active: true }
+                    ],
+                    speaker: "Таинственный голос",
+                    text: "Ты набрал номер, и после нескольких гудков кто-то ответил: 'Не задавай вопросов, просто слушай. Твоя реальность - лишь одна из многих. Ищи порталы, они откроют тебе правду'. Связь прервалась.",
+                    choices: [
+                        { text: "Попробовать ещё раз", nextScene: 10 },
+                        { text: "Отправиться искать порталы", nextScene: 11 }
+                    ],
+                    sceneName: "Звонок"
+                }
+            ],
+            characters: {
+                xweeb: {
+                    name: "Xweeb",
+                    images: {
+                        normal: "https://i.imgur.com/5EfR7kL.png"
+                    }
+                },
+                luna: {
+                    name: "Luna",
+                    images: {
+                        normal: "https://i.imgur.com/WqjXWzU.png"
+                    }
+                },
+                kai: {
+                    name: "Kai",
+                    images: {
+                        normal: "https://i.imgur.com/3JZfGqT.png"
+                    }
+                }
+            }
+        };
+
+        // Элементы DOM
+        const sceneBackground = document.getElementById('scene-background');
+        const speakerName = document.getElementById('speaker-name');
+        const dialogueText = document.getElementById('dialogue-text');
+        const choicesContainer = document.getElementById('choices-container');
+        const nextBtn = document.getElementById('next-btn');
+        const sceneIndicator = document.getElementById('scene-indicator');
+        const saveBtn = document.getElementById('save-btn');
+        const loadBtn = document.getElementById('load-btn');
+        
+        // Загрузка сцены
+        function loadScene(sceneId) {
+            const scene = gameData.scenes.find(s => s.id === sceneId);
+            if (!scene) return;
+            
+            gameData.currentSceneId = sceneId;
+            
+            // Установка фона
+            sceneBackground.style.backgroundImage = `url('${scene.background}')`;
+            
+            // Установка текста
+            speakerName.textContent = scene.speaker;
+            dialogueText.textContent = scene.text;
+            
+            // Очистка и добавление персонажей
+            document.querySelectorAll('.character').forEach(el => {
+                el.classList.remove('active');
+                el.style.backgroundImage = 'none';
+            });
+            
+            scene.characters.forEach(char => {
+                const charElement = document.getElementById(`character-${char.id}`);
+                if (charElement && gameData.characters[char.id]) {
+                    charElement.style.backgroundImage = `url('${gameData.characters[char.id].images.normal}')`;
+                    if (char.active) {
+                        charElement.classList.add('active');
+                    }
+                    
+                    // Позиционирование
+                    if (char.position === 'left') {
+                        charElement.style.marginRight = 'auto';
+                        charElement.style.marginLeft = '50px';
+                    } else if (char.position === 'right') {
+                        charElement.style.marginLeft = 'auto';
+                        charElement.style.marginRight = '50px';
+                    } else {
+                        charElement.style.marginLeft = 'auto';
+                        charElement.style.marginRight = 'auto';
+                    }
+                }
+            });
+            
+            // Очистка кнопок выбора
+            choicesContainer.innerHTML = '';
+            
+            // Добавление кнопок выбора, если они есть
+            if (scene.choices && scene.choices.length > 0) {
+                nextBtn.style.display = 'none';
+                scene.choices.forEach(choice => {
+                    const button = document.createElement('button');
+                    button.className = 'choice-btn';
+                    button.textContent = choice.text;
+                    button.addEventListener('click', () => {
+                        loadScene(choice.nextScene);
+                    });
+                    choicesContainer.appendChild(button);
+                });
+            } else {
+                nextBtn.style.display = 'block';
+            }
+            
+            // Обновление индикатора сцены
+            sceneIndicator.textContent = `Сцена ${sceneId + 1}: ${scene.sceneName}`;
+            
+            // Сохранение прогресса
+            saveGame();
+        }
+        
+        // Функция следующей сцены
+        function nextScene() {
+            // В реальной игре здесь будет логика перехода к следующей сцене
+            // Для демо просто перейдем к случайной сцене
+            const availableScenes = gameData.scenes.filter(s => s.id !== gameData.currentSceneId);
+            if (availableScenes.length > 0) {
+                const randomScene = availableScenes[Math.floor(Math.random() * availableScenes.length)];
+                loadScene(randomScene.id);
+            }
+        }
+        
+        // Сохранение игры
+        function saveGame() {
+            const saveData = {
+                currentSceneId: gameData.currentSceneId,
+                playerName: gameData.playerName,
+                saveTime: new Date().toLocaleString()
+            };
+            localStorage.setItem('xweebSave', JSON.stringify(saveData));
+            alert(`Игра сохранена! (${saveData.saveTime})`);
+        }
+        
+        // Загрузка игры
+        function loadGame() {
+            const saveData = JSON.parse(localStorage.getItem('xweebSave'));
+            if (saveData) {
+                gameData.currentSceneId = saveData.currentSceneId;
+                gameData.playerName = saveData.playerName;
+                loadScene(gameData.currentSceneId);
+                alert(`Игра загружена. Последнее сохранение: ${saveData.saveTime}`);
+            } else {
+                alert('Сохранение не найдено!');
+            }
+        }
+        
+        // Инициализация
+        function initGame() {
+            // Начальная сцена
+            loadScene(0);
+            
+            // Обработчики событий
+            nextBtn.addEventListener('click', nextScene);
+            saveBtn.addEventListener('click', saveGame);
+            loadBtn.addEventListener('click', loadGame);
+            
+            // Автосохранение при закрытии
+            window.addEventListener('beforeunload', () => {
+                saveGame();
+            });
+        }
+        
+        // Запуск игры при загрузке страницы
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
